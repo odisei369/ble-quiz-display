@@ -1,0 +1,44 @@
+[package]
+name = "ble-quiz-display"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Embassy — async runtime for embedded
+# NOTE: trouble + embassy versions must be compatible.
+# Check https://github.com/embassy-rs/trouble/tree/main/examples/nrf-sdc for
+# a known-good combination of dependency versions.
+embassy-executor = { version = "0.7", features = ["arch-cortex-m", "executor-thread", "defmt", "task-arena-size-32768"] }
+embassy-time = { version = "0.4", features = ["defmt"] }
+embassy-nrf = { version = "0.4", features = ["nrf52840", "gpiote", "time-driver-rtc1", "defmt"] }
+embassy-sync = { version = "0.7" }
+embassy-futures = "0.1"
+
+# BLE — pure Rust host stack + Nordic controller (linked in, no pre-flash needed)
+# NOTE: check https://github.com/embassy-rs/trouble for latest versions
+trouble-host = { version = "0.2", features = ["defmt", "peripheral", "gatt"] }
+nrf-sdc = { version = "=0.1.0", features = ["defmt", "peripheral", "nrf52840"] }
+bt-hci = { version = "0.3" }
+
+# Cortex-M
+cortex-m = { version = "0.7", features = ["critical-section-single-core"] }
+cortex-m-rt = "0.7"
+
+# Logging via RTT (viewable with `probe-rs` or `defmt-print`)
+defmt = "0.3"
+defmt-rtt = "0.4"
+panic-probe = { version = "0.3", features = ["print-defmt"] }
+static_cell = "2"
+
+[[bin]]
+name = "ble-quiz-display"
+path = "src/main.rs"
+
+[[bin]]
+name = "blink"
+path = "src/blink.rs"
+
+[profile.release]
+debug = 2       # full debug info for defmt
+lto = true
+opt-level = "s" # optimize for size

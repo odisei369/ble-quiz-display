@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RustQuiz — Admin</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  }
+  body { padding: 24px 32px; display: flex; flex-direction: column; gap: 18px; }
+  header { display: flex; align-items: baseline; gap: 16px; }
+  header h1 { font-size: 22px; font-weight: 700; }
+  header .meta { color: #8b949e; font-size: 14px; }
+
+  #q-text { font-size: 28px; font-weight: 600; line-height: 1.3; min-height: 36px; }
+  #q-num  { color: #8b949e; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; }
+
+  /* Bars */
+  #bars {
+    flex: 1; min-height: 280px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px;
+    align-items: stretch;
+  }
+  .bar {
+    position: relative;
+    background: #161b22; border: 1px solid #30363d; border-radius: 14px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    padding: 16px;
+  }
+  .bar .fill {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg, rgba(31,111,235,0.25), rgba(31,111,235,0.55));
+    transition: height 0.4s ease, background 0.3s ease;
+  }
+  .bar.correct .fill { background: linear-gradient(180deg, rgba(52,211,153,0.25), rgba(52,211,153,0.65)); }
+  .bar > * { position: relative; z-index: 1; }
+  .bar .text   { font-size: 14px; color: #c9d1d9; min-height: 36px; }
+  .bar .pct    { font-size: 44px; font-weight: 700; margin-top: auto; color: #fff; }
+  .bar .letter { font-size: 28px; font-weight: 800; line-height: 1; }
+  .bar[data-k="0"] .letter { color: #f87171; }
+  .bar[data-k="1"] .letter { color: #60a5fa; }
+  .bar[data-k="2"] .letter { color: #fbbf24; }
+  .bar[data-k="3"] .letter { color: #34d399; }
+  .bar.correct::after {
+    content: "✓ correct";
+    position: absolute; top: 12px; right: 14px;
+    font-size: 12px; font-weight: 600;
+    color: #34d399; letter-spacing: 0.1em; text-transform: uppercase;
+    z-index: 2;
+  }
+
+  /* Controls */
+  #controls {
+    display: flex; flex-wrap: wrap; gap: 8px; padding-top: 8px;
+    border-top: 1px solid #21262d;
+  }
+  button {
+    padding: 10px 16px; font-size: 14px; font-weight: 600;
+    background: #21262d; color: #e6edf3;
+    border: 1px solid #30363d; border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  button:hover { background: #30363d; }
+  button.toggled { background: #1f6feb; border-color: #1f6feb; color: white; }
+  button.danger  { color: #f87171; }
+  button.danger:hover { background: rgba(248,113,113,0.12); border-color: #f87171; }
+  .sep { flex: 1; }
+
+  /* Leaderboard view */
+  #lb-wrap { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+  #lb-wrap h2 { font-size: 22px; font-weight: 700; }
+  #lb-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .lb-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 18px;
+    background: #161b22; border: 1px solid #21262d; border-radius: 12px;
+  }
+  .lb-row .pos { width: 36px; font-size: 22px; font-weight: 800; color: #8b949e; }
+  .lb-row .name { flex: 1; font-size: 18px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-row .score { font-size: 22px; font-weight: 700; color: #34d399; }
+  .lb-row.gold   .pos { color: #fbbf24; }
+  .lb-row.silver .pos { color: #d1d5db; }
+  .lb-row.bronze .pos { color: #f59e0b; }
+
+  .hidden { display: none !important; }
+
+  /* Login overlay */
+  #login {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(13, 17, 23, 0.96);
+    display: flex; align-items: center; justify-content: center;
+  }
+  #login form {
+    background: #161b22; border: 1px solid #30363d; border-radius: 14px;
+    padding: 28px 32px; width: min(360px, 92vw);
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  #login h2 { font-size: 20px; font-weight: 700; }
+  #login input {
+    padding: 10px 12px; font-size: 15px;
+    background: #0d1117; color: #e6edf3;
+    border: 1px solid #30363d; border-radius: 8px;
+    outline: none;
+  }
+  #login input:focus { border-color: #1f6feb; }
+  #login button {
+    padding: 10px 16px; font-size: 14px; font-weight: 600;
+    background: #1f6feb; color: white;
+    border: 1px solid #1f6feb; border-radius: 8px;
+    cursor: pointer;
+  }
+  #login button:hover { background: #1858c4; }
+  #login-error { color: #f87171; font-size: 13px; min-height: 18px; }
+</style>
+</head>
+<body>
+
+<div id="login" class="hidden">
+  <form id="login-form" autocomplete="off">
+    <h2>🔒 Admin login</h2>
+    <input id="login-pw" type="password" placeholder="Password" autocomplete="current-password" autofocus>
+    <button type="submit">Sign in</button>
+    <div id="login-error"></div>
+  </form>
+</div>
+
+<header>
+  <h1>🦀 RustQuiz — Admin</h1>
+  <div class="meta" id="meta">–</div>
+</header>
+
+<!-- Question view -->
+<section id="view-question">
+  <div id="q-num">Question 1</div>
+  <div id="q-text">Loading…</div>
+  <div id="bars" style="margin-top:18px;"></div>
+</section>
+
+<!-- Leaderboard view -->
+<section id="view-leaderboard" class="hidden">
+  <div id="lb-wrap">
+    <h2>🏆 Leaderboard</h2>
+    <div id="lb-list"></div>
+  </div>
+</section>
+
+<div id="controls">
+  <button onclick="cmd('prev')">◀ Prev</button>
+  <button onclick="cmd('next')">Next ▶</button>
+  <button id="btn-lock"   onclick="cmd('lock')">Lock votes</button>
+  <button id="btn-reveal" onclick="cmd('reveal')">Reveal correct</button>
+  <button onclick="cmd('reset')">Reset votes</button>
+  <div class="sep"></div>
+  <button id="btn-lb" onclick="cmd('leaderboard')">Show leaderboard</button>
+  <button class="danger" onclick="resetAll()">Wipe players</button>
+</div>
+
+<script>
+const loginOverlay = document.getElementById("login");
+const loginForm    = document.getElementById("login-form");
+const loginPw      = document.getElementById("login-pw");
+const loginError   = document.getElementById("login-error");
+
+let pollTimer = null;
+
+function showLogin(msg) {
+  loginError.textContent = msg ?? "";
+  loginOverlay.classList.remove("hidden");
+  loginPw.value = "";
+  loginPw.focus();
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+
+function hideLogin() {
+  loginOverlay.classList.add("hidden");
+  loginError.textContent = "";
+  if (!pollTimer) {
+    poll();
+    pollTimer = setInterval(poll, 1000);
+  }
+}
+
+loginForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  loginError.textContent = "";
+  try {
+    const res = await fetch("/admin/login", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ password: loginPw.value }),
+    });
+    if (res.ok) {
+      hideLogin();
+    } else {
+      loginError.textContent = "Wrong password";
+      loginPw.select();
+    }
+  } catch {
+    loginError.textContent = "Network error";
+  }
+});
+
+const LETTERS = ["A", "B", "C", "D"];
+const bars = document.getElementById("bars");
+for (let i = 0; i < 4; i++) {
+  const d = document.createElement("div");
+  d.className = "bar"; d.dataset.k = String(i);
+  d.innerHTML =
+    `<div class="fill"></div>` +
+    `<div class="letter">${LETTERS[i]}</div>` +
+    `<div class="text"></div>` +
+    `<div class="pct">0%</div>`;
+  bars.appendChild(d);
+}
+
+const viewQ  = document.getElementById("view-question");
+const viewLB = document.getElementById("view-leaderboard");
+
+async function cmd(name) {
+  const res = await fetch("/admin/" + name, { method: "POST" });
+  if (res.status === 401) { showLogin("Session expired"); return; }
+  poll();
+}
+
+async function resetAll() {
+  if (!confirm("Wipe ALL players, scores, and reset to question 1?")) return;
+  const res = await fetch("/admin/reset-all", { method: "POST" });
+  if (res.status === 401) { showLogin("Session expired"); return; }
+  poll();
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function renderLeaderboard(r) {
+  const list = document.getElementById("lb-list");
+  list.innerHTML = "";
+  if (r.leaderboard.length === 0) {
+    list.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#8b949e;padding:32px;">No scores yet</div>';
+    return;
+  }
+  r.leaderboard.forEach((row, i) => {
+    const div = document.createElement("div");
+    const cls = i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : "";
+    div.className = "lb-row " + cls;
+    div.innerHTML =
+      `<div class="pos">${i + 1}</div>` +
+      `<div class="name">${escapeHtml(row.name)}</div>` +
+      `<div class="score">${row.score}</div>`;
+    list.appendChild(div);
+  });
+}
+
+async function poll() {
+  try {
+    const r = await fetch("/results").then((r) => r.json());
+
+    const inLB = r.mode === "leaderboard";
+    viewQ.classList.toggle("hidden", inLB);
+    viewLB.classList.toggle("hidden", !inLB);
+
+    if (inLB) {
+      renderLeaderboard(r);
+    } else {
+      document.getElementById("q-num").textContent =
+        `Question ${r.questionIndex + 1}`;
+      document.getElementById("q-text").textContent = r.text;
+      for (let i = 0; i < 4; i++) {
+        const bar = bars.children[i];
+        bar.querySelector(".text").textContent = r.options[i] ?? "";
+        bar.querySelector(".pct").textContent = r.votes[i] + "%";
+        bar.querySelector(".fill").style.height = r.votes[i] + "%";
+        bar.classList.toggle("correct", r.revealed && r.correct === i);
+      }
+    }
+
+    const meta = `${r.total} ${r.total === 1 ? "vote" : "votes"} · ` +
+                 `${r.totalPlayers} ${r.totalPlayers === 1 ? "player" : "players"} · ` +
+                 `${r.locked ? "locked" : "open"} · ` +
+                 `${r.revealed ? "revealed" : "hidden"}`;
+    document.getElementById("meta").textContent = meta;
+    document.getElementById("btn-lock").classList.toggle("toggled", r.locked);
+    document.getElementById("btn-reveal").classList.toggle("toggled", r.revealed);
+    document.getElementById("btn-lb").classList.toggle("toggled", inLB);
+    document.getElementById("btn-lb").textContent = inLB ? "Back to question" : "Show leaderboard";
+  } catch (e) { /* retry next tick */ }
+}
+
+(async () => {
+  try {
+    const r = await fetch("/admin/auth").then((r) => r.json());
+    if (r.authed) {
+      hideLogin();
+    } else {
+      showLogin();
+    }
+  } catch {
+    showLogin("Server unreachable");
+  }
+})();
+</script>
+</body>
+</html>

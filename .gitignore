@@ -1,0 +1,26 @@
+# Rust build artifacts
+/target/
+/bridge/target/
+
+# Node / Bun
+node_modules/
+
+# Compiled firmware binaries
+*.bin
+*.uf2
+*.elf
+*.hex
+
+# Presentation build output
+slides.html
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Local notes
+/docs/

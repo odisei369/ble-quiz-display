@@ -1,0 +1,5 @@
+# Override the parent .cargo/config.toml at the repo root, which sets
+# `target = "thumbv7em-none-eabihf"` for the firmware. The bridge is a host
+# binary and must build for the laptop's native target.
+[build]
+target = "aarch64-apple-darwin"

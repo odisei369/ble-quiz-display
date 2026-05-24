@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0d1117">
+<title>RustQuiz</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    overflow: hidden;
+  }
+  body {
+    display: flex; flex-direction: column;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  header {
+    text-align: center;
+    padding: 14px;
+    font-size: 14px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #8b949e;
+    border-bottom: 1px solid #21262d;
+  }
+  header b { color: #e6edf3; letter-spacing: 0.12em; }
+  main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; flex: 1; }
+
+  #q-text {
+    padding: 22px 18px 8px;
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  #grid {
+    flex: 1; min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 10px;
+    padding: 10px;
+  }
+  button.opt {
+    border: 2px solid #30363d;
+    border-radius: 16px;
+    background: #161b22;
+    color: #e6edf3;
+    cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 6px;
+    transition: transform 0.05s ease, background 0.15s ease, border-color 0.15s ease;
+    -webkit-user-select: none; user-select: none;
+    padding: 8px;
+  }
+  button.opt:active { transform: scale(0.97); }
+  button.opt .letter { font-size: 44px; font-weight: 800; line-height: 1; }
+  button.opt .text   { font-size: 15px; font-weight: 500; text-align: center; color: #c9d1d9; }
+  button.opt[data-k="0"] .letter { color: #f87171; }
+  button.opt[data-k="1"] .letter { color: #60a5fa; }
+  button.opt[data-k="2"] .letter { color: #fbbf24; }
+  button.opt[data-k="3"] .letter { color: #34d399; }
+  button.opt.selected { background: rgba(31, 111, 235, 0.18); border-color: #1f6feb; }
+  button.opt:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  #status {
+    text-align: center;
+    padding: 10px 12px env(safe-area-inset-bottom);
+    font-size: 14px;
+    color: #8b949e;
+    min-height: 1.6em;
+  }
+
+  /* Name entry */
+  #name-form { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 16px; }
+  #name-form h2 { font-size: 22px; font-weight: 600; text-align: center; }
+  #name-form input {
+    width: 100%;
+    padding: 16px 18px;
+    font-size: 18px;
+    background: #161b22;
+    color: #e6edf3;
+    border: 2px solid #30363d;
+    border-radius: 12px;
+    outline: none;
+  }
+  #name-form input:focus { border-color: #1f6feb; }
+  #name-form button {
+    padding: 16px;
+    font-size: 17px; font-weight: 600;
+    background: #1f6feb; color: white;
+    border: none; border-radius: 12px;
+    cursor: pointer;
+  }
+  #name-form button:disabled { opacity: 0.5; }
+
+  /* Leaderboard view */
+  #lb { padding: 18px; overflow-y: auto; flex: 1; }
+  #lb h2 { font-size: 20px; margin-bottom: 14px; color: #c9d1d9; }
+  .me-card {
+    background: linear-gradient(135deg, #1f6feb33, #1f6feb15);
+    border: 1px solid #1f6feb;
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 18px;
+    text-align: center;
+  }
+  .me-card .rank { font-size: 38px; font-weight: 800; color: #fff; }
+  .me-card .meta { font-size: 14px; color: #c9d1d9; margin-top: 4px; }
+  .row {
+    display: flex; align-items: center;
+    padding: 12px 14px;
+    background: #161b22; border: 1px solid #21262d;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    gap: 12px;
+  }
+  .row .pos { width: 28px; font-weight: 700; color: #8b949e; }
+  .row .name { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .score { font-weight: 700; color: #34d399; }
+  .row.me { border-color: #1f6feb; background: rgba(31, 111, 235, 0.12); }
+  .row.gold   .pos { color: #fbbf24; }
+  .row.silver .pos { color: #d1d5db; }
+  .row.bronze .pos { color: #f59e0b; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<header>🦀 <b>RustQuiz</b></header>
+<main>
+  <!-- View: name entry -->
+  <section id="view-name" class="center hidden">
+    <form id="name-form" onsubmit="return submitName(event)">
+      <h2>Enter your name</h2>
+      <input id="name-input" type="text" maxlength="24" autocomplete="off" autocapitalize="words" placeholder="e.g. Ada" required>
+      <button type="submit">Join quiz</button>
+    </form>
+  </section>
+
+  <!-- View: question + voting -->
+  <section id="view-question" class="hidden" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+    <div id="q-text">Loading…</div>
+    <div id="grid"></div>
+    <div id="status"></div>
+  </section>
+
+  <!-- View: leaderboard -->
+  <section id="view-leaderboard" class="hidden" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+    <div id="lb">
+      <div class="me-card">
+        <div class="rank" id="my-rank">–</div>
+        <div class="meta" id="my-meta">–</div>
+      </div>
+      <h2>Top 10</h2>
+      <div id="lb-list"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const LETTERS = ["A", "B", "C", "D"];
+const grid = document.getElementById("grid");
+const qEl = document.getElementById("q-text");
+const statusEl = document.getElementById("status");
+
+const views = {
+  name: document.getElementById("view-name"),
+  question: document.getElementById("view-question"),
+  leaderboard: document.getElementById("view-leaderboard"),
+};
+
+let local = {
+  hasName: false,
+  myVote: null,
+  questionId: -1,
+  options: [],
+  locked: false,
+  mode: "question",
+};
+
+function showView(name) {
+  for (const k in views) views[k].classList.toggle("hidden", k !== name);
+}
+
+function ordinal(n) {
+  if (n == null) return "–";
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+function renderQuestion() {
+  if (grid.dataset.qid !== String(local.questionId)) {
+    grid.dataset.qid = String(local.questionId);
+    grid.innerHTML = "";
+    for (let i = 0; i < 4; i++) {
+      const b = document.createElement("button");
+      b.className = "opt"; b.dataset.k = String(i);
+      b.innerHTML = `<div class="letter">${LETTERS[i]}</div><div class="text"></div>`;
+      b.addEventListener("click", () => vote(i));
+      grid.appendChild(b);
+    }
+  }
+  for (let i = 0; i < 4; i++) {
+    const b = grid.children[i];
+    b.querySelector(".text").textContent = local.options[i] ?? "";
+    b.classList.toggle("selected", local.myVote === i);
+    b.disabled = local.locked;
+  }
+  if (local.locked) {
+    statusEl.textContent = local.myVote != null
+      ? "Locked — your answer: " + LETTERS[local.myVote]
+      : "Locked — no answer submitted";
+  } else if (local.myVote != null) {
+    statusEl.textContent = "Tap another to change your answer";
+  } else {
+    statusEl.textContent = "Tap to vote";
+  }
+}
+
+function renderLeaderboard(me, results) {
+  document.getElementById("my-rank").textContent = ordinal(me.rank);
+  document.getElementById("my-meta").textContent =
+    `${me.name ?? "You"} · ${me.score} correct of ${results.questionIndex + 1}`;
+  const list = document.getElementById("lb-list");
+  list.innerHTML = "";
+  results.leaderboard.forEach((row, i) => {
+    const div = document.createElement("div");
+    const cls = i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : "";
+    const mine = row.name === me.name;
+    div.className = "row " + cls + (mine ? " me" : "");
+    div.innerHTML =
+      `<div class="pos">${i + 1}</div>` +
+      `<div class="name">${escapeHtml(row.name)}</div>` +
+      `<div class="score">${row.score}</div>`;
+    list.appendChild(div);
+  });
+  if (results.leaderboard.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:#8b949e;padding:24px;">No scores yet</div>';
+  }
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+async function vote(i) {
+  if (local.locked) return;
+  local.myVote = i; renderQuestion();
+  try {
+    await fetch("/vote", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ option: i }),
+    });
+  } catch (e) { /* will resync on next poll */ }
+}
+
+async function submitName(ev) {
+  ev.preventDefault();
+  const input = document.getElementById("name-input");
+  const name = input.value.trim();
+  if (!name) return false;
+  const btn = ev.target.querySelector("button");
+  btn.disabled = true;
+  try {
+    const r = await fetch("/join", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    if (r.ok) {
+      local.hasName = true;
+      await poll();
+    }
+  } finally {
+    btn.disabled = false;
+  }
+  return false;
+}
+
+async function poll() {
+  try {
+    const [results, me] = await Promise.all([
+      fetch("/results").then((r) => r.json()),
+      fetch("/me").then((r) => r.json()),
+    ]);
+    local.hasName = !!me.name;
+    local.options = results.options;
+    local.questionId = results.questionId;
+    local.locked = results.locked;
+    local.mode = results.mode;
+    local.myVote = me.questionId === results.questionId ? me.vote : null;
+
+    if (!local.hasName) {
+      showView("name");
+      return;
+    }
+    if (results.mode === "leaderboard") {
+      showView("leaderboard");
+      renderLeaderboard(me, results);
+    } else {
+      showView("question");
+      qEl.textContent = results.text;
+      renderQuestion();
+    }
+  } catch (e) {
+    statusEl.textContent = "Connection lost — retrying…";
+  }
+}
+
+poll();
+setInterval(poll, 1500);
+</script>
+</body>
+</html>

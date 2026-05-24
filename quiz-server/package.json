@@ -1,0 +1,9 @@
+{
+  "name": "quiz-server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch server.ts",
+    "start": "bun run server.ts"
+  }
+}
