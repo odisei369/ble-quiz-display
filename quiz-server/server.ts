@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -10,33 +10,34 @@ type Question = {
   correct: number;
 };
 
-const QUESTIONS: Question[] = [
-  {
-    text: "Which crate provides the async runtime on bare-metal Rust?",
-    options: ["tokio", "Embassy", "async-std", "smol"],
-    correct: 1,
-  },
-  {
-    text: "What does #![no_std] do?",
-    options: [
-      "Disables the Rust std library",
-      "Disables generics",
-      "Disables the heap allocator",
-      "Disables closures",
-    ],
-    correct: 0,
-  },
-  {
-    text: "Which BLE host crate powers this firmware?",
-    options: ["nrf-softdevice", "btleplug", "trouble-host", "bluer"],
-    correct: 2,
-  },
-  {
-    text: "What does the MAX7219 drive?",
-    options: ["LED matrices", "An OLED display", "E-paper", "A TFT screen"],
-    correct: 0,
-  },
-];
+function loadQuestions(): Question[] {
+  // questions.json is gitignored — real answers live there in prod.
+  // questions.example.json ships with the repo and is the dev fallback.
+  const primary = join(__dirname, "questions.json");
+  const fallback = join(__dirname, "questions.example.json");
+  const path = existsSync(primary) ? primary : fallback;
+  console.log(`Loading questions from ${path}`);
+  const raw = JSON.parse(readFileSync(path, "utf8")) as unknown;
+  if (!Array.isArray(raw) || raw.length === 0) {
+    throw new Error(`${path}: expected a non-empty array of questions`);
+  }
+  return raw.map((q, i) => {
+    const text = (q as { text?: unknown }).text;
+    const options = (q as { options?: unknown }).options;
+    const correct = (q as { correct?: unknown }).correct;
+    if (typeof text !== "string") throw new Error(`Q${i}: text must be a string`);
+    if (!Array.isArray(options) || options.length !== 4
+        || !options.every((o) => typeof o === "string")) {
+      throw new Error(`Q${i}: options must be exactly 4 strings`);
+    }
+    if (!Number.isInteger(correct) || (correct as number) < 0 || (correct as number) > 3) {
+      throw new Error(`Q${i}: correct must be 0..3`);
+    }
+    return { text, options: options as [string, string, string, string], correct: correct as number };
+  });
+}
+
+const QUESTIONS: Question[] = loadQuestions();
 
 type Player = {
   name: string;

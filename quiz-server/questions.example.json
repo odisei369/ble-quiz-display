@@ -1,0 +1,27 @@
+[
+  {
+    "text": "Which crate provides the async runtime on bare-metal Rust?",
+    "options": ["tokio", "Embassy", "async-std", "smol"],
+    "correct": 1
+  },
+  {
+    "text": "What does #![no_std] do?",
+    "options": [
+      "Disables the Rust std library",
+      "Disables generics",
+      "Disables the heap allocator",
+      "Disables closures"
+    ],
+    "correct": 0
+  },
+  {
+    "text": "Which BLE host crate powers this firmware?",
+    "options": ["nrf-softdevice", "btleplug", "trouble-host", "bluer"],
+    "correct": 2
+  },
+  {
+    "text": "What does the MAX7219 drive?",
+    "options": ["LED matrices", "An OLED display", "E-paper", "A TFT screen"],
+    "correct": 0
+  }
+]

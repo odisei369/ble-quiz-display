@@ -24,3 +24,8 @@ slides.html
 
 # Local notes
 /docs/
+
+# Real quiz questions (with answers) — kept out of the public repo.
+# Use questions.example.json as the template; copy real questions to the
+# server out-of-band.
+/quiz-server/questions.json
