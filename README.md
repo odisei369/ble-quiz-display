@@ -146,6 +146,28 @@ GND                  ---->  GND
 | Display | custom `display.rs` | MAX7219 SPI driver, bar chart rendering |
 | Logging | `defmt` + `defmt-rtt` | Structured logging over RTT, viewable with probe-rs |
 
+## Running the demo
+
+The bridge polls the quiz server over HTTP. The deployed server lives at
+`https://quiz.nidobit.com`; the bridge reads `QUIZ_URL` from the environment.
+
+```bash
+# 1. Power on the firmware (USB or battery), confirm it advertises as "RustQuiz".
+# 2. On the laptop, start the bridge:
+./run-demo.sh
+
+# Or against a local quiz server (handy for development):
+QUIZ_URL=http://localhost:3000 ./run-demo.sh
+
+# Local quiz server (Bun):
+cd quiz-server && bun run dev
+```
+
+`run-demo.sh` builds `bridge/target/release/bridge` on first run, then execs it
+with `QUIZ_URL` set. Audience votes from
+`https://quiz.nidobit.com/`; the presenter drives questions from
+`https://quiz.nidobit.com/admin`.
+
 ## Building
 
 ```bash
