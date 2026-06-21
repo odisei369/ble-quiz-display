@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 # Embassy — async runtime for embedded
 # NOTE: trouble + embassy versions must be compatible.
-# Check https://github.com/embassy-rs/trouble/tree/main/examples/nrf-sdc for
+# Check https://github.com/embassy-rs/trouble/tree/main/examples/nrf52 for
 # a known-good combination of dependency versions.
 embassy-executor = { version = "0.7", features = ["arch-cortex-m", "executor-thread", "defmt", "task-arena-size-32768"] }
 embassy-time = { version = "0.4", features = ["defmt"] }

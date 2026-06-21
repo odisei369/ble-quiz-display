@@ -12,7 +12,7 @@
 //!     Commands: 0 = clear, 1 = reveal correct answer (param = 0–3)
 //!
 //! NOTE: the `trouble` API is evolving rapidly. If this doesn't compile,
-//! check https://github.com/embassy-rs/trouble/tree/main/examples/nrf-sdc
+//! check https://github.com/embassy-rs/trouble/tree/main/examples/nrf52
 //! for up-to-date examples and adjust accordingly.
 
 #![no_std]
