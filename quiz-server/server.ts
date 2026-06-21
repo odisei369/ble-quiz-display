@@ -215,7 +215,10 @@ const server = Bun.serve({
         questionIndex: state.questionIndex,
         text: q.text,
         options: q.options,
-        correct: q.correct,
+        // Withhold the answer until reveal so audience clients polling /results
+        // can't read it ahead of time. 255 is an out-of-range sentinel the
+        // bridge already treats as "no target" (correct < 4).
+        correct: state.revealed ? q.correct : 255,
         votes,
         total: state.votes.size,
         locked: state.locked,
