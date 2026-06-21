@@ -7,7 +7,7 @@ description = "macOS BLE bridge: polls the quiz server and forwards votes to the
 [dependencies]
 btleplug = "0.11"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time", "signal"] }
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "native-tls"] }
 serde = { version = "1", features = ["derive"] }
 anyhow = "1"
 futures = "0.3"
