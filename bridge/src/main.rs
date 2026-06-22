@@ -17,7 +17,7 @@
 //!   }
 //!
 //! Configurable via env vars:
-//!   QUIZ_URL          base URL of the quiz server (default http://localhost:3000)
+//!   QUIZ_URL          base URL of the quiz server (default https://quiz.nidobit.com)
 //!   POLL_INTERVAL_MS  poll interval in ms (default 2000)
 //!   DEVICE_NAME       BLE local name to look for (default "RustQuiz")
 //!   RUST_LOG          tracing filter, e.g. "bridge=debug,btleplug=warn"
@@ -62,7 +62,7 @@ struct Config {
 impl Config {
     fn from_env() -> Self {
         let quiz_url = env::var("QUIZ_URL")
-            .unwrap_or_else(|_| "http://localhost:3000".into())
+            .unwrap_or_else(|_| "https://quiz.nidobit.com".into())
             .trim_end_matches('/')
             .to_string();
         let poll_interval = env::var("POLL_INTERVAL_MS")
