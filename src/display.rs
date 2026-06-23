@@ -182,9 +182,9 @@ impl<'d, T: Instance> QuizDisplay<'d, T> {
         self.render(bars_from_pct(pct)).await;
     }
 
-    /// Render a single frame of the "reveal" animation.
+    /// Render a single frame of the "blink" animation.
     ///
-    /// Alternates the correct option's module between:
+    /// Alternates the blinked option's module between:
     ///   phase 0: actual vote bar (same as normal)
     ///   phase 1: vertically inverted bar (lit rows ↔ dark rows)
     /// At 0% / 100% this becomes a clean letter ↔ full-lit flash; at
@@ -218,11 +218,6 @@ impl<'d, T: Instance> QuizDisplay<'d, T> {
             self.render(bar_lit).await;
             Timer::after_millis(150).await;
         }
-    }
-
-    /// Set brightness (0 = dim, 15 = max).
-    pub async fn set_brightness(&mut self, level: u8) {
-        self.command_all(REG_INTENSITY, level & 0x0F).await;
     }
 
     // --- private ---

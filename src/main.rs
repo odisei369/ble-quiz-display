@@ -9,7 +9,7 @@
 //! GATT Service UUID: 00001000-b0cd-11ec-871f-d45ddf138840
 //!   - Votes char (write):   00001001-...  → [A%, B%, C%, D%]
 //!   - Control char (write): 00001002-...  → [cmd, param]
-//!     Commands: 0 = clear, 1 = reveal correct answer (param = 0–3)
+//!     Commands: 0 = clear, 1 = blink option (param = 0–3), 2 = stop blinking
 //!
 //! NOTE: the `trouble` API is evolving rapidly. If this doesn't compile,
 //! check https://github.com/embassy-rs/trouble/tree/main/examples/nrf52
@@ -62,7 +62,7 @@ struct QuizService {
     votes: [u8; 4],
 
     /// Control commands: [cmd, param].
-    /// cmd=0: clear display. cmd=1: reveal correct answer (param = 0–3).
+    /// cmd=0: clear display. cmd=1: blink option (param = 0–3). cmd=2: stop blinking.
     #[characteristic(uuid = "00001002-b0cd-11ec-871f-d45ddf138840", write)]
     control: [u8; 2],
 }
